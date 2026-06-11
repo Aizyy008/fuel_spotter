@@ -1,0 +1,45 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/home/dev/Downloads/spotter/venv/bin/python --version)",
+      "Bash(/home/dev/Downloads/spotter/venv/bin/pip list *)",
+      "Bash(python3 -c ' *)",
+      "Bash(curl -s -m 10 -o /dev/null -w \"%{http_code}\\\\n\" \"https://nominatim.openstreetmap.org/search?q=test&format=json\")",
+      "Bash(curl -s -m 10 -o /dev/null -w \"%{http_code}\\\\n\" \"https://router.project-osrm.org/route/v1/driving/-122.42,37.78;-122.40,37.79\")",
+      "Bash(curl -s -m 10 -o /dev/null -w \"%{http_code}\\\\n\" \"https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=4600+Silver+Hill+Rd+Washington+DC&benchmark=4&format=json\")",
+      "Bash(curl -s -m 15 -o /tmp/gaz.zip -w \"%{http_code} %{size_download}\\\\n\" \"https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/2024_Gaz_place_national.zip\")",
+      "Read(//tmp/**)",
+      "Bash(unzip -o gaz.zip)",
+      "Bash(curl -s -m 20 -o /tmp/gaz_cousub.zip -w \"%{http_code} %{size_download}\\\\n\" \"https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/2024_Gaz_cousubs_national.zip\")",
+      "Bash(unzip -o gaz_cousub.zip)",
+      "Bash(python3 /tmp/build_geocode_lookup.py)",
+      "Bash(curl -s -m 15 \"https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=Los+Angeles,+CA&benchmark=4&format=json\")",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s -m 15 \"https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=350+5th+Ave,+New+York,+NY&benchmark=4&format=json\")",
+      "Bash(curl -s -m 15 -H \"User-Agent: spotter-fuel-route-test/1.0\" \"https://nominatim.openstreetmap.org/search?q=Chicago,+IL&format=json&countrycodes=us&limit=1\")",
+      "Bash(curl -s -m 15 -H \"User-Agent: spotter-fuel-route-test/1.0\" \"https://nominatim.openstreetmap.org/search?q=350+5th+Ave,+New+York,+NY&format=json&countrycodes=us&limit=1\")",
+      "Bash(curl -s -m 20 \"https://router.project-osrm.org/route/v1/driving/-87.6298,41.8781;-118.2437,34.0522?overview=full&geometries=geojson&annotations=false\" -o /tmp/osrm_test.json)",
+      "Bash(curl -s -o /dev/null -w \"curl_status:%{http_code}\\\\n\" http://127.0.0.1:8001/api/route/)",
+      "Bash(curl -s -o /dev/null -w \"alive_check:%{http_code}\\\\n\" http://127.0.0.1:8001/api/route/)",
+      "Bash(time curl -s -X POST http://127.0.0.1:8001/api/route/ -H \"Content-Type: application/json\" -d '{\"start_location\": \"Chicago, IL\", \"finish_location\": \"Los Angeles, CA\"}' -o /tmp/route_response.json -w \"\\\\nHTTP %{http_code}\\\\n\")",
+      "Bash(time curl -s -X POST http://127.0.0.1:8001/api/route/ -H \"Content-Type: application/json\" -d '{\"start_location\": \"Chicago, IL\", \"finish_location\": \"Los Angeles, CA\"}' -o /tmp/route_response2.json -w \"\\\\nHTTP %{http_code}\\\\n\")",
+      "Bash(time curl -s -X POST http://127.0.0.1:8001/api/route/ -H \"Content-Type: application/json\" -d '{\"start_location\": \"Chicago, IL\", \"finish_location\": \"Los Angeles, CA\"}' -o /tmp/route_response3.json -w \"\\\\nHTTP %{http_code}\\\\n\")",
+      "Bash(time curl -s -X POST http://127.0.0.1:8001/api/route/ -H \"Content-Type: application/json\" -d '{\"start_location\": \"New York, NY\", \"finish_location\": \"Philadelphia, PA\"}')",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('distance', d['distance_miles'], 'fuel_stops', len\\(d['fuel_stops']\\), 'cost', d['total_fuel_cost']\\)\")",
+      "Bash(curl -s -X POST http://127.0.0.1:8001/api/route/ -H \"Content-Type: application/json\" -d '{\"start_location\": \"Asdkjaslkdjalksjdoiqjwe, ZZ\", \"finish_location\": \"Los Angeles, CA\"}' -w \"\\\\nHTTP %{http_code}\\\\n\")",
+      "Bash(curl -s -X POST http://127.0.0.1:8001/api/route/ -H \"Content-Type: application/json\" -d '{\"start_location\": \"Chicago, IL\"}' -w \"\\\\nHTTP %{http_code}\\\\n\")",
+      "Bash(curl -s -o /tmp/map.html -w \"HTTP %{http_code}\\\\n\" \"http://127.0.0.1:8001/api/route/map/?start_location=Chicago,+IL&finish_location=Denver,+CO\")",
+      "Bash(curl -s -X POST http://127.0.0.1:8001/api/route/ -H \"Content-Type: application/json\" -d '{\"start_location\": \"Seattle, WA\", \"finish_location\": \"Miami, FL\"}')",
+      "Bash(curl -s -X POST http://127.0.0.1:8001/api/route/ -H \"Content-Type: application/json\" -d '{\"start_location\": \"Chicago, IL\", \"finish_location\": \"Joplin, MO\"}')",
+      "Bash(curl -s -o /dev/null -w \"API alive: %{http_code}\\\\n\" http://127.0.0.1:8001/api/route/)",
+      "Bash(curl -s -o /dev/null -w \"Unencoded: %{http_code}\\\\n\" \"http://127.0.0.1:8001/api/route/map/?start_location=Chicago, IL&finish_location=Los Angeles, CA\")",
+      "Bash(curl -s -o /dev/null -w \"Encoded:   %{http_code}\\\\n\" \"http://127.0.0.1:8001/api/route/map/?start_location=Chicago%2C%20IL&finish_location=Los%20Angeles%2C%20CA\")",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code}\\\\n\" \"http://127.0.0.1:8000/api/route/map/?start_location=Chicago%2C%20IL&finish_location=Los%20Angeles%2C%20CA\")",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code}\\\\n\" \"http://127.0.0.1:8001/api/route/map/?start_location=Chicago%2C%20IL&finish_location=Los%20Angeles%2C%20CA\")",
+      "Bash(kill 372447)"
+    ],
+    "additionalDirectories": [
+      "/tmp"
+    ]
+  }
+}

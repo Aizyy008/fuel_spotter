@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Fuel Route Planner</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { font-family: -apple-system, Helvetica, Arial, sans-serif; margin: 0; padding: 1.5rem; }
+        h1 { font-size: 1.4rem; margin-bottom: 1rem; }
+        form { margin-bottom: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        input[type=text] { padding: 0.5rem; font-size: 1rem; flex: 1; min-width: 200px; }
+        button { padding: 0.5rem 1.5rem; font-size: 1rem; cursor: pointer; }
+        #map { height: 480px; width: 100%; border: 1px solid #ccc; }
+        .summary { margin: 1rem 0; display: flex; gap: 2rem; flex-wrap: wrap; }
+        .summary div { background: #f5f5f5; padding: 0.75rem 1.25rem; border-radius: 6px; }
+        .summary strong { display: block; font-size: 1.2rem; }
+        table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+        th, td { border: 1px solid #ddd; padding: 0.4rem 0.6rem; text-align: left; font-size: 0.9rem; }
+        th { background: #f0f0f0; }
+        .error { color: #b00020; font-weight: bold; }
+        .warning { color: #9a6700; }
+    </style>
+</head>
+<body>
+    <h1>Fuel-Optimal Route Planner</h1>
+    <form method="get">
+        <input type="text" name="start_location" placeholder="Start location (e.g. Chicago, IL)" value="{{ start_location }}" required>
+        <input type="text" name="finish_location" placeholder="Finish location (e.g. Los Angeles, CA)" value="{{ finish_location }}" required>
+        <button type="submit">Plan route</button>
+    </form>
+
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
+
+    {% if result %}
+        <div class="summary">
+            <div>Distance<strong>{{ result.distance_miles }} mi</strong></div>
+            <div>Duration<strong>{{ result.duration_hours }} hr</strong></div>
+            <div>Total fuel cost<strong>${{ result.total_fuel_cost }}</strong></div>
+            <div>Total gallons<strong>{{ result.total_gallons }}</strong></div>
+            <div>Fuel stops<strong>{{ result.fuel_stops|length }}</strong></div>
+        </div>
+
+        {% for warning in result.warnings %}
+            <p class="warning">&#9888; {{ warning }}</p>
+        {% endfor %}
+
+        <div id="map"></div>
+
+        {% if result.fuel_stops %}
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Station</th>
+                    <th>City, State</th>
+                    <th>Mile marker</th>
+                    <th>Price/gal</th>
+                    <th>Gallons</th>
+                    <th>Cost</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stop in result.fuel_stops %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ stop.name }}</td>
+                    <td>{{ stop.city }}, {{ stop.state }}</td>
+                    <td>{{ stop.distance_from_start_miles }}</td>
+                    <td>${{ stop.price_per_gallon }}</td>
+                    <td>{{ stop.gallons_purchased }}</td>
+                    <td>${{ stop.fuel_cost }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+    {% endif %}
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    {% if route_data %}
+    <script id="route-data" type="application/json">{{ route_data|safe }}</script>
+    <script>
+        const data = JSON.parse(document.getElementById('route-data').textContent);
+        const map = L.map('map');
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 19,
+        }).addTo(map);
+
+        const latLngs = data.route_geometry.coordinates.map(c => [c[1], c[0]]);
+        const routeLine = L.polyline(latLngs, { color: '#1a73e8', weight: 4 }).addTo(map);
+        map.fitBounds(routeLine.getBounds(), { padding: [20, 20] });
+
+        L.marker([data.start.latitude, data.start.longitude])
+            .addTo(map)
+            .bindPopup('Start: ' + data.start.query);
+
+        L.marker([data.finish.latitude, data.finish.longitude])
+            .addTo(map)
+            .bindPopup('Finish: ' + data.finish.query);
+
+        data.fuel_stops.forEach((stop, i) => {
+            L.circleMarker([stop.latitude, stop.longitude], {
+                radius: 7, color: '#e8711a', fillColor: '#e8711a', fillOpacity: 0.9,
+            })
+                .addTo(map)
+                .bindPopup(
+                    `Stop ${i + 1}: ${stop.name}<br>${stop.city}, ${stop.state}` +
+                    `<br>$${stop.price_per_gallon}/gal &mdash; ${stop.gallons_purchased} gal`
+                );
+        });
+    </script>
+    {% endif %}
+</body>
+</html>
